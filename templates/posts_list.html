@@ -67,4 +67,38 @@
   우측 상단의 <span class="font-medium text-slate-800">“새 글 쓰기”</span>를
   눌러 첫 글을 작성해보세요.
 </div>
+
+{% if total_pages > 1 %}
+  <div class="mt-6 flex items-center justify-center gap-2 text-sm">
+    {# 이전 페이지 버튼 #}
+    {% if has_prev %}
+      <a href="{{ url_for('posts_list', page=page-1, q=query, sort=sort_option) }}"
+         class="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100">
+        ‹ 이전
+      </a>
+    {% else %}
+      <span class="rounded-md border border-slate-100 px-3 py-1 text-slate-300">
+        ‹ 이전
+      </span>
+    {% endif %}
+
+    {# 현재 페이지 / 전체 페이지 표시 #}
+    <span class="px-3 py-1 text-slate-500">
+      Page {{ page }} / {{ total_pages }}
+    </span>
+
+    {# 다음 페이지 버튼 #}
+    {% if has_next %}
+      <a href="{{ url_for('posts_list', page=page+1, q=query, sort=sort_option) }}"
+         class="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100">
+        다음 ›
+      </a>
+    {% else %}
+      <span class="rounded-md border border-slate-100 px-3 py-1 text-slate-300">
+        다음 ›
+      </span>
+    {% endif %}
+  </div>
+{% endif %}
+
 {% endif %} {% endblock %}

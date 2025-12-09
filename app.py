@@ -1,3 +1,4 @@
+from math import ceil
 import os
 import time
 from flask import Flask, render_template, request, redirect, url_for
@@ -18,6 +19,7 @@ UPLOAD_FOLDER = "static/uploads"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "svg"}
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True) #업로드 폴더가 없다면 생성
+PER_PAGE = 10
 
 
 def to_youtube_embed_url(youtube_url: str | None) -> str | None:
@@ -62,9 +64,15 @@ def allowed_file(filename):
 """글 목록 페이지(검색 추가)"""
 @app.route("/posts")
 def posts_list():
-    # 1) 쿼리 파라미터에서 검색어 & 정렬옵션 가져오기
+    # 1) 쿼리 파라미터에서 검색어 & 정렬옵션 & 페이지 번호 가져오기
     query = request.args.get("q", "").strip()
     sort_option = request.args.get("sort", "recent") #arg에서 sort찾고 없으면 기본값: 최신순(recent)
+    try:
+        page = int(request.args.get("page", 1))
+    except ValueError:
+        page = 1
+    if page < 1:
+        page = 1
 
     # 2) 검색 결과 가져오기
     posts = search_posts(query)
@@ -81,12 +89,31 @@ def posts_list():
         sorted_posts = sorted(posts, key=lambda p: p["id"], reverse=True)
         sort_option = "recent" #엉뚱한 값 강제로 안전하게 정규화
 
+    # 4) 페이지네이션 계산
+    total_posts = len(sorted_posts)
+    total_pages = max(1, ceil(total_posts / PER_PAGE))
+
+    #page가 범위 밖이면 보정
+    if page > total_pages:
+        page = total_pages
+
+    start = (page - 1) * PER_PAGE
+    end = start + PER_PAGE
+    paginated_posts = sorted_posts[start:end]
+
+    has_prev = page > 1
+    has_next = page < total_pages
+
     # 4) templates에 검색어 & 정렬옵션 함께 넘겨줌    
     return render_template(
         "posts_list.html", 
         posts=sorted_posts, 
         query=query,
-        sort_option=sort_option
+        sort_option=sort_option,
+        page=page,
+        total_pages=total_pages,
+        has_prev=has_prev,
+        has_next=has_next,
         )
 
 
